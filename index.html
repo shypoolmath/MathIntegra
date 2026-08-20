@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- Chart.js CDN untuk Visualisasi Grafik Analisis Guru -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         tailwind.config = {
@@ -380,11 +382,12 @@
             </div>
         </section>
 
+        <!-- VIEW DASHBOARD GURU -->
         <section id="view-teacher-dashboard" class="hidden space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-900">Dashboard Rekapitulasi Guru</h2>
-                    <p class="text-xs text-slate-500">Pantau hasil pengerjaan, waktu, dan kepatuhan layar siswa secara real-time.</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Dashboard Rekapitulasi & Analisis Guru</h2>
+                    <p class="text-xs text-slate-500">Pantau hasil pengerjaan, waktu, kepatuhan layar, serta visualisasi grafik statistik siswa.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="fetchDataFromGAS()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
@@ -402,22 +405,58 @@
                 </div>
             </div>
 
+            <!-- RINGKASAN STATISTIK DENGAN BENTO CARD -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                     <span class="text-xs text-slate-500 font-medium">Total Sesi Latihan</span>
                     <h3 id="stat-total-sessions" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <span class="text-xs text-slate-500 font-medium">Rata-Rata Nilai</span>
+                    <span class="text-xs text-slate-500 font-medium">Rata-Rata Nilai Keseluruhan</span>
                     <h3 id="stat-avg-score" class="text-2xl font-bold text-brand-600 mt-1">0</h3>
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <span class="text-xs text-slate-500 font-medium">Siswa Berlatih</span>
+                    <span class="text-xs text-slate-500 font-medium">Siswa Aktif Berlatih</span>
                     <h3 id="stat-unique-students" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                     <span class="text-xs text-slate-500 font-medium">Total Pelanggaran Tab</span>
                     <h3 id="stat-total-violations" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+                </div>
+            </div>
+
+            <!-- SEKSI GRAFIK ANALISIS VISUAL GURU -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Grafik 1: Rata-rata Nilai Per Kategori Operasi -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Rata-Rata Nilai per Jenis Operasi</h4>
+                            <p class="text-[11px] text-slate-500">Analisis penguasaan materi siswa per jenis latihan</p>
+                        </div>
+                        <div class="p-2 bg-brand-50 text-brand-600 rounded-lg">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="relative h-60 w-full flex items-center justify-center">
+                        <canvas id="chart-score-by-op"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafik 2: Partisipasi Sesi Latihan Per Kelas -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Distribusi Sesi Latihan per Kelas</h4>
+                            <p class="text-[11px] text-slate-500">Jumlah frekuensi latihan siswa dari Kelas 7A sampai 7L</p>
+                        </div>
+                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="relative h-60 w-full flex items-center justify-center">
+                        <canvas id="chart-sessions-by-class"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -430,12 +469,19 @@
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
                         <select id="filter-class" onchange="renderRecapTable()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none">
-                            <option value="">Semua Kelas</option>
+                            <option value="">Semua Kelas (7A - 7L)</option>
                             <option value="7A">7A</option>
                             <option value="7B">7B</option>
                             <option value="7C">7C</option>
-                            <option value="8A">8A</option>
-                            <option value="8B">8B</option>
+                            <option value="7D">7D</option>
+                            <option value="7E">7E</option>
+                            <option value="7F">7F</option>
+                            <option value="7G">7G</option>
+                            <option value="7H">7H</option>
+                            <option value="7I">7I</option>
+                            <option value="7J">7J</option>
+                            <option value="7K">7K</option>
+                            <option value="7L">7L</option>
                         </select>
                         <select id="filter-operation" onchange="renderRecapTable()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none">
                             <option value="">Semua Operasi</option>
@@ -500,6 +546,10 @@
 
         // ARRAY UTAMA REKAPITULASI DATA (INITIAL STATE)
         let mainRecapData = [];
+
+        // INSTANCE CHART.JS UNTUK ANALISIS GURU
+        let chartScoresInstance = null;
+        let chartSessionsInstance = null;
 
         // GLOBAL STATE
         let state = {
@@ -681,6 +731,7 @@
                 btnLogout.classList.add('flex');
                 studentDashboard.classList.add('hidden');
                 teacherDashboard.classList.remove('hidden');
+                renderRecapTable();
             } else {
                 roleBadge.innerText = 'Mode Siswa';
                 btnLogin.classList.remove('hidden');
@@ -975,7 +1026,7 @@
         }
 
         // ==========================================
-        // REKAPITULASI & EKSPOR
+        // REKAPITULASI, ANALISIS GRAFIK, & EKSPOR
         // ==========================================
         function renderRecapTable() {
             const tbody = document.getElementById('table-recap-body');
@@ -1024,6 +1075,91 @@
             document.getElementById('stat-unique-students').innerText = uniqueStudents;
             const totalViolations = mainRecapData.reduce((acc, curr) => acc + (Number(curr.violations) || 0), 0);
             document.getElementById('stat-total-violations').innerText = totalViolations;
+
+            // Render Visual Charts
+            renderAnalyticsCharts(mainRecapData);
+        }
+
+        // FUNGSI RENDER GRAFIK ANALISIS CHART.JS
+        function renderAnalyticsCharts(data) {
+            const ctxScores = document.getElementById('chart-score-by-op');
+            const ctxSessions = document.getElementById('chart-sessions-by-class');
+
+            if (!ctxScores || !ctxSessions) return;
+
+            // 1. Dapatkan Rata-rata Skor per Jenis Operasi
+            const operations = ['Penjumlahan', 'Pengurangan', 'Perkalian', 'Pembagian', 'Campuran'];
+            const scoresMap = { 'Penjumlahan': [], 'Pengurangan': [], 'Perkalian': [], 'Pembagian': [], 'Campuran': [] };
+
+            data.forEach(item => {
+                if (scoresMap[item.operation]) {
+                    scoresMap[item.operation].push(Number(item.score) || 0);
+                }
+            });
+
+            const avgScores = operations.map(op => {
+                const arr = scoresMap[op];
+                if (arr.length === 0) return 0;
+                return (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+            });
+
+            // 2. Dapatkan Frekuensi Latihan per Kelas (7A - 7L)
+            const classesList = ['7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H', '7I', '7J', '7K', '7L'];
+            const classCounts = classesList.map(cls => data.filter(d => d.class === cls).length);
+
+            // Destroy Chart Lama Jika Ada
+            if (chartScoresInstance) chartScoresInstance.destroy();
+            if (chartSessionsInstance) chartSessionsInstance.destroy();
+
+            // Render Chart 1: Bar Chart Rata-Rata Nilai
+            chartScoresInstance = new Chart(ctxScores, {
+                type: 'bar',
+                data: {
+                    labels: operations,
+                    datasets: [{
+                        label: 'Rata-Rata Nilai',
+                        data: avgScores,
+                        backgroundColor: ['#10B981', '#F43F5E', '#F59E0B', '#3B82F6', '#6366F1'],
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `Rata-rata: ${ctx.raw}` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } }
+                    }
+                }
+            });
+
+            // Render Chart 2: Doughnut / Pie Chart Distribusi Kelas
+            chartSessionsInstance = new Chart(ctxSessions, {
+                type: 'doughnut',
+                data: {
+                    labels: classesList,
+                    datasets: [{
+                        label: 'Jumlah Sesi',
+                        data: classCounts,
+                        backgroundColor: [
+                            '#4F46E5', '#6366F1', '#818CF8', '#38BDF8', 
+                            '#34D399', '#10B981', '#F59E0B', '#F97316', 
+                            '#EF4444', '#EC4899', '#A855F7', '#64748B'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
+                }
+            });
         }
 
         function debounceSearch() {
@@ -1118,3 +1254,12 @@
     </script>
 </body>
 </html>
+```eof
+
+### Ringkasan Perubahan pada File `index.html`:
+1. **Opsi Kelas 7A s.d. 7L**: Pilihan kelas pada modal identitas siswa (`input-student-class`) dan menu filter rekapitulasi guru (`filter-class`) telah diperbarui mencakup kelas **7A, 7B, 7C, 7D, 7E, 7F, 7G, 7H, 7I, 7J, 7K, hingga 7L**.
+2. **Visualisasi Grafik Analisis Guru**:
+   - Memasang pustaka **Chart.js** via CDN.
+   - Menambahkan dua kartu grafik statistik interaktif di dashboard guru:
+     * **Grafik Bar**: Rata-rata nilai pengerjaan siswa per jenis operasi matematika.
+     * **Grafik Doughnut**: Frekuensi partisipasi sesi latihan siswa yang terdistribusi dari Kelas 7A sampai 7L.
