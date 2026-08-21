@@ -355,10 +355,17 @@
                     ...
                 </div>
 
-                <div class="max-w-xs mx-auto pt-4">
-                    <label class="block text-xs font-medium text-slate-500 mb-2">Jawaban Anda (Harus Bilangan Bulat):</label>
-                    <input type="number" step="1" id="input-quiz-answer" placeholder="Ketik jawaban..." class="w-full text-center text-2xl font-bold py-3 px-4 rounded-2xl border-2 border-brand-200 focus:border-brand-600 focus:outline-none transition">
-                </div>
+<div class="max-w-xs mx-auto pt-4">
+    <label class="block text-xs font-medium text-slate-500 mb-2">Jawaban Anda (Gunakan tombol +/- untuk negatif):</label>
+    <div class="flex gap-2">
+        <!-- Tombol Negatif Baru -->
+        <button type="button" onclick="toggleNegativeSign()" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xl rounded-2xl border-2 border-slate-200 transition shadow-sm flex items-center justify-center" title="Tambah/Hapus Tanda Negatif">
+            +/-
+        </button>
+                <input type="text" inputmode="numeric" id="input-quiz-answer" placeholder="Ketik jawaban..." class="w-full text-center text-2xl font-bold py-3 px-4 rounded-2xl border-2 border-brand-200 focus:border-brand-600 focus:outline-none transition">
+    </div>
+</div>               
+
             </div>
 
             <div class="flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
@@ -668,7 +675,33 @@
             }
             return list;
         }
-
+function toggleNegativeSign() {
+    const inputAns = document.getElementById('input-quiz-answer');
+    let currentValue = inputAns.value.trim();
+    
+    // Logika pergantian tanda
+    if (currentValue === "") {
+        // 1. Jika kotak kosong, langsung isi dengan tanda negatif
+        currentValue = "-";
+    } else if (currentValue.startsWith("-")) {
+        // 2. Jika sudah ada tanda negatif, potong/buang karakter pertama (tanda minusnya)
+        currentValue = currentValue.substring(1);
+    } else {
+        // 3. Jika nilainya positif (angka biasa), tambahkan tanda minus di bagian depan
+        currentValue = "-" + currentValue;
+    }
+    
+    // Perbarui nilai pada kotak input yang terlihat di layar
+    inputAns.value = currentValue;
+    
+    // Perbarui nilai di dalam array memori (state) sistem agar tersimpan
+    if (state.quiz.active) {
+        state.quiz.answers[state.quiz.currentIdx] = currentValue;
+    }
+    
+    // Opsional: Kembalikan kursor ke kotak input agar siswa bisa langsung mengetik angka
+    inputAns.focus();
+}
         // ==========================================
         // UI & MODAL CONTROL
         // ==========================================
@@ -1253,4 +1286,3 @@
         }
     </script>
 </body>
-</html>
